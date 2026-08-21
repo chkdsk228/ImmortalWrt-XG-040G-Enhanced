@@ -329,7 +329,7 @@ jobs:
           rm -rf ./build_dir/target-*/linux-*/linux-*/.config
           rm -rf ./build_dir/target-*/linux-*/linux-*/include/config
           rm -rf ./staging_dir/target-*/pkginfo
-          make clean -j$(nproc)
+          make dirclean -j$(nproc)
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
