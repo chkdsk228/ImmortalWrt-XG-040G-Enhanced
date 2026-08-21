@@ -325,7 +325,10 @@ jobs:
           # 运行自定义脚本
           $GITHUB_WORKSPACE/Scripts/Settings.sh
           
-          # 清理
+          # 清理（强制清除内核编译缓存）
+          rm -rf ./build_dir/target-*/linux-*/linux-*/.config
+          rm -rf ./build_dir/target-*/linux-*/linux-*/include/config
+          rm -rf ./staging_dir/target-*/pkginfo
           make clean -j$(nproc)
       - name: Download Packages
         if: env.WRT_TEST != 'true'
