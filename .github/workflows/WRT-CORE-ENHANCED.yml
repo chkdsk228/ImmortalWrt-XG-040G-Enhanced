@@ -126,22 +126,34 @@ jobs:
                        0402-dt-bindings-power-domain-Add-Airoha-EN7581-power-do.patch \
                        0403-pmdomain-Introduce-driver-to-support-Airoha-EN7581-.patch \
                        607-arm64-dts-airoha-fix-an7581-cpufreq-probe.patch; do
-            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
-            [ -f "$PATCH" ] && echo "  ✅ $PATCH" || echo "  ❌ $PATCH (404)"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            if [ ! -f "$PATCH" ]; then
+              echo "  ❌ 关键补丁下载失败: $PATCH"
+              exit 1
+            fi
+            echo "  ✅ $PATCH"
           done
           
           echo "📥 下载 USB PHY 补丁..."
           for PATCH in 220-07-phy-add-driver-for-MediaTek-TPHY-used-on-AN7581.patch \
                        220-08-dt-bindings-phy-add-MediaTek-TPHY-binding-used-on-.patch; do
-            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
-            [ -f "$PATCH" ] && echo "  ✅ $PATCH" || echo "  ❌ $PATCH (404)"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            if [ ! -f "$PATCH" ]; then
+              echo "  ❌ 关键补丁下载失败: $PATCH"
+              exit 1
+            fi
+            echo "  ✅ $PATCH"
           done
           
           echo "📥 下载 PCS/SerDes 补丁（PON 支持）..."
           for PATCH in 310-09-net-pcs-airoha-add-PCS-driver-for-Airoha-AN7581-SoC.patch \
                        310-10-net-pcs-airoha-add-AN7581-SerDes-USXGMII-mode-sup.patch; do
-            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
-            [ -f "$PATCH" ] && echo "  ✅ $PATCH" || echo "  ❌ $PATCH (404)"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            if [ ! -f "$PATCH" ]; then
+              echo "  ❌ 关键补丁下载失败: $PATCH"
+              exit 1
+            fi
+            echo "  ✅ $PATCH"
           done
           
           # 复制到源码树
@@ -171,8 +183,12 @@ jobs:
                      an758x-nokia_xg-040g-common.dtsi \
                      an758x-nokia_xg-040g-stock-parts.dtsi \
                      an758x-nokia_xg-040g-ubi-parts.dtsi; do
-            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XG2010G/master/target/linux/airoha/dts/$DTS"
-            [ -f "$DTS" ] && echo "  ✅ $DTS" || echo "  ❌ $DTS (404)"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XG2010G/master/target/linux/airoha/dts/$DTS"
+            if [ ! -f "$DTS" ]; then
+              echo "  ❌ 关键 DTS 下载失败: $DTS"
+              exit 1
+            fi
+            echo "  ✅ $DTS"
           done
           
           echo "✅ DTS 整合完成！"
@@ -247,16 +263,41 @@ jobs:
         run: |
           cd ./wrt/
           
+          # 合并配置文件
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
           else
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
           fi
           
+          # 第一次 defconfig
+          make defconfig -j$(nproc)
+          
+          # ⚠️ 强制注入 CONFIG_KERNEL_PM 等配置（修复 generic 层覆盖问题）
+          if [[ "$WRT_CONFIG" == "AIROHA-ENHANCED" ]]; then
+            echo "==========================================="
+            echo "🔧 强制注入 Kernel PM/CPUFreq 配置"
+            echo "==========================================="
+            echo "CONFIG_KERNEL_PM=y" >> .config
+            echo "CONFIG_KERNEL_PM_GENERIC_DOMAINS=y" >> .config
+            echo "CONFIG_KERNEL_PM_GENERIC_DOMAINS_OF=y" >> .config
+            echo "CONFIG_KERNEL_PM_OPP=y" >> .config
+            echo "CONFIG_KERNEL_ARM_AIROHA_SOC_CPUFREQ=y" >> .config
+            echo "CONFIG_KERNEL_AIROHA_CPU_PM_DOMAIN=y" >> .config
+            echo "CONFIG_KERNEL_CPUFREQ_DT=y" >> .config
+            echo "CONFIG_KERNEL_CPUFREQ_DT_PLATDEV=y" >> .config
+            
+            # 第二次 defconfig（让强制配置生效）
+            echo "🔧 重新执行 defconfig..."
+            make defconfig -j$(nproc)
+            echo "✅ CONFIG_KERNEL_PM 强制注入完成！"
+          fi
+          
+          # 运行自定义脚本
           $GITHUB_WORKSPACE/Scripts/Settings.sh
           
-          make defconfig -j$(nproc) && make clean -j$(nproc)
-
+          # 清理
+          make clean -j$(nproc)
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
