@@ -51,3 +51,10 @@ CONFIG_PACKAGE_kmod-phy-realtek=y
 CONFIG_PACKAGE_kmod-leds-gpio=y
 CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
 CONFIG_PACKAGE_kmod-regulator-userspace-consumer=y
+
+# 内核配置导出（用于验证）
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
+# PON 管理界面
+CONFIG_PACKAGE_luci-app-airoha-xpon=y

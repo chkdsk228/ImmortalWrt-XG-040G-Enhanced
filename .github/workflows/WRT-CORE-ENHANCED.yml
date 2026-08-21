@@ -291,6 +291,35 @@ jobs:
             echo "🔧 重新执行 defconfig..."
             make defconfig -j$(nproc)
             echo "✅ CONFIG_KERNEL_PM 强制注入完成！"
+          
+          # ⚠️ 新增：验证配置是否生效
+          echo "=========================================="
+          echo "🔍 验证 CONFIG_KERNEL_PM 是否生效"
+          echo "=========================================="
+          
+          # 检查关键配置
+          MISSING=0
+          
+          grep -q "CONFIG_PM=y" .config && echo "✅ CONFIG_PM=y" || { echo "❌ CONFIG_PM 缺失"; MISSING=1; }
+          grep -q "CONFIG_PM_GENERIC_DOMAINS=y" .config && echo "✅ CONFIG_PM_GENERIC_DOMAINS=y" || { echo "❌ CONFIG_PM_GENERIC_DOMAINS 缺失"; MISSING=1; }
+          grep -q "CONFIG_PM_OPP=y" .config && echo "✅ CONFIG_PM_OPP=y" || { echo "❌ CONFIG_PM_OPP 缺失"; MISSING=1; }
+          grep -q "CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" .config && echo "✅ CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" || { echo "❌ CPUFreq 驱动缺失"; MISSING=1; }
+          grep -q "CONFIG_AIROHA_CPU_PM_DOMAIN=y" .config && echo "✅ CONFIG_AIROHA_CPU_PM_DOMAIN=y" || { echo "❌ PM Domain 驱动缺失"; MISSING=1; }
+          grep -q "CONFIG_IKCONFIG=y" .config && echo "✅ CONFIG_IKCONFIG=y" || echo "⚠️ IKCONFIG 未启用"
+          grep -q "CONFIG_IKCONFIG_PROC=y" .config && echo "✅ CONFIG_IKCONFIG_PROC=y" || echo "⚠️ IKCONFIG_PROC 未启用"
+          
+          # 如果关键配置缺失，退出构建
+          if [ $MISSING -eq 1 ]; then
+            echo ""
+            echo "❌❌❌ 关键内核配置缺失！构建失败！"
+            echo "可能原因：CONFIG_KERNEL_* 前缀未生效，被 generic 层覆盖"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅✅✅ 所有关键配置验证通过！"
+          echo "=========================================="
+
           fi
           
           # 运行自定义脚本

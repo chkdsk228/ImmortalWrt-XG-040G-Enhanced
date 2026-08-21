@@ -76,19 +76,48 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 fi
 
 
-#airoha平台调整：2.5G LAN + LAN4做WAN
+#airoha平台调整：直接生成完整的 network 配置文件
 if [[ "${WRT_TARGET^^}" == *"AIROHA"* ]]; then
-	mkdir -p ./package/base-files/files/etc/uci-defaults/
-	cat > ./package/base-files/files/etc/uci-defaults/99-2.5g-lan << 'UCI_EOF'
-#!/bin/sh
-# 2.5G口(eth1)+lan2/lan3 为 LAN, lan4 为 WAN
-uci -q batch << EOB
-set network.lan.ifname='eth1 lan2 lan3'
-set network.wan.device='lan4'
-set network.wan.proto='dhcp'
-commit network
-EOB
-UCI_EOF
-	chmod +x ./package/base-files/files/etc/uci-defaults/99-2.5g-lan
-	echo "airoha port setup: 2.5G→LAN  lan4→WAN"
+    echo "=========================================="
+    echo "🔧 配置 Airoha 网络（eth1+lan2+lan3→LAN, lan4→WAN）"
+    echo "=========================================="
+    
+    mkdir -p ./package/base-files/files/etc/config/
+    
+    cat > ./package/base-files/files/etc/config/network << 'NETWORK_EOF'
+config interface 'loopback'
+    option device 'lo'
+    option proto 'static'
+    option ipaddr '127.0.0.1'
+    option netmask '255.0.0.0'
+
+config globals 'globals'
+    option ula_prefix 'auto'
+
+config device
+    option name 'br-lan'
+    option type 'bridge'
+    list ports 'eth1'
+    list ports 'lan2'
+    list ports 'lan3'
+
+config interface 'lan'
+    option device 'br-lan'
+    option proto 'static'
+    option ipaddr '192.168.1.1'
+    option netmask '255.255.255.0'
+    option ip6assign '60'
+
+config interface 'wan'
+    option device 'lan4'
+    option proto 'dhcp'
+
+config interface 'wan6'
+    option device 'lan4'
+    option proto 'dhcpv6'
+NETWORK_EOF
+    
+    sed -i "s/192\\.168\\.1\\.1/$WRT_IP/g" ./package/base-files/files/etc/config/network
+    
+    echo "✅ Airoha 网络配置完成"
 fi
