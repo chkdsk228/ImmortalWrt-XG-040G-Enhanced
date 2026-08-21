@@ -1,0 +1,16 @@
+# Build artifacts
+wrt/
+*.o
+*.ko
+*.bin
+*.itb
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Caches
+.ccache/
+staging_dir/
