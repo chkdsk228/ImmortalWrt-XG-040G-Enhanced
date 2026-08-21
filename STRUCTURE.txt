@@ -1,0 +1,123 @@
+ImmortalWrt-XG-040G-Enhanced/
+│
+├── 📄 核心文档
+│   ├── README.md              ⭐ 项目介绍、快速开始、固件特性
+│   ├── INTEGRATION.md         ⭐ 详细整合说明、补丁清单、验证清单
+│   ├── SETUP.md               ⭐ 完整设置指南、故障排查、后续更新
+│   ├── SUMMARY.md             ⭐ 项目摘要与快速参考
+│   ├── PROJECT_READY.txt      ⭐ 就绪指南（快速操作）
+│   └── STRUCTURE.txt          本文件
+│
+├── 🔧 工具脚本
+│   ├── PUSH.sh                ⭐ 自动推送脚本（交互式）
+│   └── .gitignore             Git 忽略规则
+│
+├── ⚙️ GitHub Actions Workflows
+│   ├── AIR-ENHANCED.yml       ⭐ 增强版主 workflow（手动触发）
+│   ├── WRT-CORE-ENHANCED.yml  ⭐ 增强版构建核心（自动下载补丁）
+│   ├── AIR-ALL.yml            原项目 workflow（保留）
+│   ├── WRT-CORE.yml           原项目构建核心（保留）
+│   ├── Auto-Clean.yml         自动清理（7天）
+│   ├── Cache-Clean.yml        缓存清理
+│   ├── AIR-LEDE.yml           Lede 编译（保留）
+│   ├── MTK-ALL.yml            MTK 平台（保留）
+│   ├── OWRT-ALL.yml           OpenWrt 平台（保留）
+│   ├── QCA-ALL.yml            高通平台（保留）
+│   └── WRT-TEST.yml           测试模式
+│
+├── 📦 配置文件 (Config/)
+│   ├── AIROHA-ENHANCED.txt    ⭐ 增强配置（CPUFreq/USB 强制注入）
+│   ├── AIROHA-WIFI-NO.txt     原 AN7581 配置（保留）
+│   ├── GENERAL.txt            通用配置
+│   ├── MEDIATEK-WIFI-NO.txt   MTK 无 WiFi
+│   ├── MEDIATEK-WIFI-YES.txt  MTK 有 WiFi
+│   ├── IPQ60XX-WIFI-NO.txt    高通 IPQ60XX 无 WiFi
+│   ├── IPQ60XX-WIFI-YES.txt   高通 IPQ60XX 有 WiFi
+│   ├── IPQ807X-WIFI-NO.txt    高通 IPQ807X 无 WiFi
+│   ├── IPQ807X-WIFI-YES.txt   高通 IPQ807X 有 WiFi
+│   ├── ROCKCHIP.txt           瑞芯微平台
+│   ├── X86.txt                x86 平台
+│   └── TEST.txt               测试配置
+│
+└── 🛠️ 脚本工具 (Scripts/)
+    ├── Settings.sh            系统设置（IP/主机名/WIFI/区域）
+    ├── Packages.sh            插件管理（Lucky/feeds）
+    ├── Handles.sh             额外处理（主题/应用）
+    ├── Renames.sh             ⭐ 固件重命名（enhanced 标记）
+    └── patch-an7581-dtsi.py   DTS 补丁（已废弃，保留兼容）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔑 关键文件说明：
+
+【AIR-ENHANCED.yml】
+  - 手动触发构建
+  - 调用 WRT-CORE-ENHANCED.yml
+  - 配置：AIROHA-ENHANCED
+
+【WRT-CORE-ENHANCED.yml】
+  - 自动下载 XR1710G 补丁（CPUFreq/USB PHY/PCS）
+  - 自动下载 XG2010G DTS 文件
+  - 自动克隆 airoha-xpon-luci
+  - 生成 Release 时附带增强说明
+
+【AIROHA-ENHANCED.txt】
+  - CONFIG_KERNEL_PM=y               # CPUFreq 依赖
+  - CONFIG_KERNEL_USB=y              # USB 支持
+  - CONFIG_KERNEL_ARM_AIROHA_SOC_CPUFREQ=y
+  - CONFIG_PACKAGE_ucode-mod-math=y  # 修复 argon 主题
+  - CONFIG_PACKAGE_luci-app-airoha-npu=y
+  - ... 共 30+ 项配置
+
+【Settings.sh】
+  - 修改默认 IP/主机名/WIFI
+  - 添加 airoha 平台的 WAN/LAN 配置（lan4→WAN）
+  - 配置文件注入
+
+【Renames.sh】
+  - 固件重命名：immortalwrt → enhanced
+  - 添加 enhanced 标记方便识别
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 整合资源统计：
+
+来源：naoki66/ImmortalWrt-for-Gemtek-XR1710G (94★)
+  ├── CPUFreq/PM-Domain 补丁 × 4
+  ├── USB PHY 补丁 × 2
+  └── PCS/SerDes 补丁 × 2
+
+来源：naoki66/ImmortalWrt-for-Gemtek-XG2010G (3★)
+  ├── XG-040G-MD DTS 文件 × 7
+  └── image/an7581.mk × 1
+
+来源：naoki66/airoha-xpon-luci (4★)
+  └── PON 管理界面（完整克隆）
+
+原项目：chkdsk228/OpenWRT-CI-XG-040G-MD
+  ├── GitHub Actions CI 框架
+  ├── 配置文件体系
+  └── 脚本工具集
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ 增强特性：
+
+1. ✅ CPUFreq 完整支持（XR1710G 4个补丁 vs 原项目主线1个）
+2. ✅ USB 3.0 完整支持（USB PHY 补丁 + 内核注入）
+3. ✅ PON 管理界面（airoha-xpon-luci，GPON/XGPON/EPON 认证）
+4. ✅ 自动补丁下载（无需手动维护 Borrow 脚本）
+5. ✅ 官方 DTS 支持（XG2010G 直接支持 XG-040G-MD）
+6. ✅ 100+ 内核补丁（Flow Offload/NPU/PCIe from XR1710G）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 快速开始：
+
+1. 查看 PROJECT_READY.txt（快速操作指南）
+2. 阅读 SETUP.md（详细设置步骤）
+3. 参考 INTEGRATION.md（技术细节）
+4. 使用 PUSH.sh 推送到 GitHub
+5. 触发 AIR-ENHANCED workflow 构建
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
