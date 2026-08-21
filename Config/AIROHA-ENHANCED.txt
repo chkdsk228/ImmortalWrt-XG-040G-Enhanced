@@ -1,0 +1,53 @@
+#
+# Enhanced configuration for Nokia XG-040G-MD
+# Integrated with naoki66's XR1710G/XG2010G patches
+#
+
+# Target
+CONFIG_TARGET_airoha=y
+CONFIG_TARGET_airoha_an7581=y
+CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_nokia_xg-040g-md=y
+CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_gemtek_xg2010g=y
+
+# Kernel Features
+CONFIG_KERNEL_DEVMEM=y
+CONFIG_KERNEL_PM=y
+CONFIG_KERNEL_PM_GENERIC_DOMAINS=y
+CONFIG_KERNEL_PM_GENERIC_DOMAINS_OF=y
+CONFIG_KERNEL_PM_OPP=y
+CONFIG_KERNEL_ARM_AIROHA_SOC_CPUFREQ=y
+CONFIG_KERNEL_AIROHA_CPU_PM_DOMAIN=y
+CONFIG_KERNEL_CPUFREQ_DT=y
+CONFIG_KERNEL_CPUFREQ_DT_PLATDEV=y
+
+# USB Support
+CONFIG_KERNEL_USB=y
+CONFIG_KERNEL_USB_XHCI_HCD=y
+CONFIG_KERNEL_USB_XHCI_PLATFORM=y
+CONFIG_KERNEL_REGULATOR=y
+CONFIG_KERNEL_REGULATOR_FIXED_VOLTAGE=y
+
+# Busybox
+CONFIG_BUSYBOX_CUSTOM=y
+CONFIG_BUSYBOX_CONFIG_DEVMEM=y
+
+# NPU
+CONFIG_PACKAGE_kmod-dummy=y
+CONFIG_DEFAULT_airoha-en7581-npu-firmware=y
+CONFIG_PACKAGE_airoha-en7581-npu-firmware=y
+CONFIG_PACKAGE_luci-app-airoha-npu=y
+
+# Fixes
+CONFIG_PACKAGE_ucode-mod-math=y
+CONFIG_PACKAGE_vlmcsd=n
+
+# Drivers
+CONFIG_PACKAGE_kmod-usb3=y
+CONFIG_PACKAGE_kmod-usb-ledtrig-usbport=y
+CONFIG_PACKAGE_kmod-nft-offload=y
+CONFIG_PACKAGE_kmod-br-netfilter=y
+CONFIG_PACKAGE_kmod-phy-airoha-en8811h=y
+CONFIG_PACKAGE_kmod-phy-realtek=y
+CONFIG_PACKAGE_kmod-leds-gpio=y
+CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
+CONFIG_PACKAGE_kmod-regulator-userspace-consumer=y
