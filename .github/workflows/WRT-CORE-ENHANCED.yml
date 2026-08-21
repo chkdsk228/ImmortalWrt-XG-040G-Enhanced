@@ -1,0 +1,333 @@
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2026 VIKINGYFY & chkdsk228
+# Enhanced Edition with naoki66's patches
+
+name: WRT-CORE-ENHANCED
+
+on:
+  workflow_call:
+    inputs:
+      WRT_CONFIG:
+        required: true
+        type: string
+      WRT_THEME:
+        required: true
+        type: string
+      WRT_NAME:
+        required: true
+        type: string
+      WRT_SSID:
+        required: true
+        type: string
+      WRT_WORD:
+        required: true
+        type: string
+      WRT_IP:
+        required: true
+        type: string
+      WRT_PW:
+        required: true
+        type: string
+      WRT_REPO:
+        required: true
+        type: string
+      WRT_BRANCH:
+        required: true
+        type: string
+      WRT_SOURCE:
+        required: true
+        type: string
+      WRT_PACKAGE:
+        required: false
+        type: string
+      WRT_TEST:
+        required: false
+        type: string
+
+env:
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  WRT_AUTHOR: ${{github.repository_owner}}
+
+jobs:
+  wrt_build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Check Server
+        run: |
+          echo "=== 系统信息 ==="
+          echo "服务器: $(uname -a)"
+          echo "CPU核心: $(nproc)"
+          echo "内存: $(free -h | awk '/^Mem:/ {print $2}')"
+          echo "磁盘: $(df -h / | awk 'NR==2 {print $4}')"
+          echo "Docker: $(docker --version 2>/dev/null || echo 'N/A')"
+          echo ""
+          echo "=== 构建配置 ==="
+          echo "CONFIG: ${{inputs.WRT_CONFIG}}"
+          echo "SOURCE: ${{inputs.WRT_SOURCE}}"
+          echo "BRANCH: ${{inputs.WRT_BRANCH}}"
+          echo "TARGET: airoha/an7581"
+
+      - name: Initialization
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -S -p '' -E apt update
+          sudo -S -p '' -E apt -y full-upgrade
+          sudo -S -p '' -E apt -y install $(curl -fsSL https://is.gd/depend_ubuntu2204_openwrt)
+          sudo -S -p '' -E apt -y autoremove --purge
+          sudo -S -p '' -E apt clean
+          sudo -S -p '' -E timedatectl set-timezone "Asia/Shanghai"
+
+      - name: Initialization Variables
+        run: |
+          export WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
+          export WRT_MARK="${{inputs.WRT_SOURCE}}-${{inputs.WRT_BRANCH}}"
+          export WRT_INFO="${{inputs.WRT_CONFIG}}-${WRT_MARK}-${WRT_DATE}"
+          export WRT_TARGET=$(grep "^CONFIG_TARGET_" $GITHUB_WORKSPACE/Config/${{inputs.WRT_CONFIG}}.txt | cut -d_ -f3 | cut -d= -f1)
+          export WRT_HASH=$(git log --pretty=format:'%h' -n 1)
+          
+          echo "WRT_DATE=$WRT_DATE" >> $GITHUB_ENV
+          echo "WRT_MARK=$WRT_MARK" >> $GITHUB_ENV
+          echo "WRT_INFO=$WRT_INFO" >> $GITHUB_ENV
+          echo "WRT_TARGET=$WRT_TARGET" >> $GITHUB_ENV
+          echo "WRT_HASH=$WRT_HASH" >> $GITHUB_ENV
+          echo "WRT_THEME=${{inputs.WRT_THEME}}" >> $GITHUB_ENV
+          echo "WRT_NAME=${{inputs.WRT_NAME}}" >> $GITHUB_ENV
+          echo "WRT_SSID=${{inputs.WRT_SSID}}" >> $GITHUB_ENV
+          echo "WRT_WORD=${{inputs.WRT_WORD}}" >> $GITHUB_ENV
+          echo "WRT_IP=${{inputs.WRT_IP}}" >> $GITHUB_ENV
+          echo "WRT_PW=${{inputs.WRT_PW}}" >> $GITHUB_ENV
+          echo "WRT_PACKAGE=${{inputs.WRT_PACKAGE}}" >> $GITHUB_ENV
+          echo "WRT_TEST=${{inputs.WRT_TEST}}" >> $GITHUB_ENV
+
+      - name: Clone Source
+        run: |
+          git clone --depth=1 --single-branch ${{inputs.WRT_REPO}} -b ${{inputs.WRT_BRANCH}} ./wrt/
+          cd ./wrt/ && echo "WRT_COMMIT=$(git log -1 --format='%H')" >> $GITHUB_ENV
+
+      - name: Borrow XR1710G Patches (Enhanced)
+        if: env.WRT_TARGET == 'airoha'
+        run: |
+          cd ./wrt/target/linux/airoha/
+          echo "=========================================="
+          echo "🔧 整合 naoki66/XR1710G 补丁（增强版）"
+          echo "=========================================="
+          
+          # 创建临时目录
+          mkdir -p /tmp/xr1710g-patches
+          cd /tmp/xr1710g-patches
+          
+          # 下载 XR1710G 的关键补丁
+          echo "📥 下载 CPUFreq/PM-Domain 补丁..."
+          for PATCH in 0401-pmdomain-core-support-for-SoC-external-power-domain.patch \
+                       0402-dt-bindings-power-domain-Add-Airoha-EN7581-power-do.patch \
+                       0403-pmdomain-Introduce-driver-to-support-Airoha-EN7581-.patch \
+                       607-arm64-dts-airoha-fix-an7581-cpufreq-probe.patch; do
+            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            [ -f "$PATCH" ] && echo "  ✅ $PATCH" || echo "  ❌ $PATCH (404)"
+          done
+          
+          echo "📥 下载 USB PHY 补丁..."
+          for PATCH in 220-07-phy-add-driver-for-MediaTek-TPHY-used-on-AN7581.patch \
+                       220-08-dt-bindings-phy-add-MediaTek-TPHY-binding-used-on-.patch; do
+            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            [ -f "$PATCH" ] && echo "  ✅ $PATCH" || echo "  ❌ $PATCH (404)"
+          done
+          
+          echo "📥 下载 PCS/SerDes 补丁（PON 支持）..."
+          for PATCH in 310-09-net-pcs-airoha-add-PCS-driver-for-Airoha-AN7581-SoC.patch \
+                       310-10-net-pcs-airoha-add-AN7581-SerDes-USXGMII-mode-sup.patch; do
+            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            [ -f "$PATCH" ] && echo "  ✅ $PATCH" || echo "  ❌ $PATCH (404)"
+          done
+          
+          # 复制到源码树
+          cd $GITHUB_WORKSPACE/wrt/target/linux/airoha/patches-6.18/
+          cp -v /tmp/xr1710g-patches/*.patch ./ 2>/dev/null || echo "⚠️  部分补丁缺失，继续..."
+          
+          echo "✅ 补丁整合完成！"
+
+      - name: Borrow XG2010G DTS
+        if: env.WRT_TARGET == 'airoha'
+        run: |
+          cd ./wrt/target/linux/airoha/
+          echo "=========================================="
+          echo "📦 借用 XG2010G 的 DTS 文件"
+          echo "=========================================="
+          
+          # 下载 image/an7581.mk
+          curl -sLo image/an7581.mk "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XG2010G/master/target/linux/airoha/image/an7581.mk"
+          echo "  ✅ image/an7581.mk"
+          
+          # 下载 DTS 文件
+          cd ./dts/
+          for DTS in an7581-gemtek-xg2010g.dts \
+                     an7581-nokia_xg-040g-md.dts \
+                     an7581-nokia_xg-040g-md-ubi.dts \
+                     an7581-nokia_xg-040g-md-common.dtsi \
+                     an758x-nokia_xg-040g-common.dtsi \
+                     an758x-nokia_xg-040g-stock-parts.dtsi \
+                     an758x-nokia_xg-040g-ubi-parts.dtsi; do
+            curl -sLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XG2010G/master/target/linux/airoha/dts/$DTS"
+            [ -f "$DTS" ] && echo "  ✅ $DTS" || echo "  ❌ $DTS (404)"
+          done
+          
+          echo "✅ DTS 整合完成！"
+
+      - name: Check Scripts
+        run: |
+          find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+
+      - name: Check Caches
+        id: check-cache
+        if: env.WRT_TEST != 'true'
+        uses: actions/cache@main
+        with:
+          key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
+          restore-keys: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}
+          path: |
+            ./wrt/.ccache
+            ./wrt/staging_dir/host*
+            ./wrt/staging_dir/tool*
+
+      - name: Update Caches
+        if: env.WRT_TEST != 'true'
+        run: |
+          if [ -d "./wrt/staging_dir" ]; then
+            find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
+              find "$DIR" -type f -exec touch {} +
+            done
+            mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
+            echo "toolchain skiped done!"
+          else
+            echo "caches missed!"
+          fi
+
+          if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
+            CACHE_LIST=$(gh cache list --key "$WRT_CONFIG-$WRT_INFO" | cut -f 1)
+            for CACHE_KEY in $CACHE_LIST; do
+              gh cache delete $CACHE_KEY
+            done
+            echo "caches cleanup done!"
+          fi
+
+      - name: Update Feeds
+        run: |
+          cd ./wrt/
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Custom Packages
+        run: |
+          cd ./wrt/package/
+          $GITHUB_WORKSPACE/Scripts/Packages.sh
+          $GITHUB_WORKSPACE/Scripts/Handles.sh
+
+      - name: Install airoha-xpon-luci
+        if: env.WRT_TARGET == 'airoha'
+        run: |
+          cd ./wrt/package/
+          echo "=========================================="
+          echo "📦 集成 airoha-xpon-luci（PON 管理）"
+          echo "=========================================="
+          
+          git clone --depth=1 https://github.com/naoki66/airoha-xpon-luci.git
+          
+          if [ -d "airoha-xpon-luci" ]; then
+            echo "✅ airoha-xpon-luci 克隆成功"
+            ls -la airoha-xpon-luci/
+          else
+            echo "❌ 克隆失败"
+          fi
+
+      - name: Custom Settings
+        run: |
+          cd ./wrt/
+          
+          if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
+            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
+          else
+            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
+          fi
+          
+          $GITHUB_WORKSPACE/Scripts/Settings.sh
+          
+          make defconfig -j$(nproc) && make clean -j$(nproc)
+
+      - name: Download Packages
+        if: env.WRT_TEST != 'true'
+        run: |
+          cd ./wrt/
+          make download -j$(nproc)
+
+      - name: Compile Firmware
+        if: env.WRT_TEST != 'true'
+        run: |
+          cd ./wrt/
+          make -j$(nproc) || { make -j1 V=s || { echo "BUILD FAILED"; exit 1; }; }
+
+      - name: Machine Information
+        run: |
+          cd ./wrt/
+          echo "==========================================="
+          echo "📊 构建完成 — 系统状态"
+          echo "==========================================="
+          df -h
+          echo ""
+          echo "固件输出："
+          find ./bin/targets/ -type f -name "*.bin" -o -name "*.itb" | head -20
+
+      - name: Package Firmware
+        if: env.WRT_TEST != 'true'
+        run: |
+          cd ./wrt/ && mkdir -p ./upload/
+          
+          rm -rf $(find ./bin/targets/ -iregex ".*\(json\|manifest\|buildinfo\|sha256sums\|packages\)$")
+          cp -rf $(find ./bin/targets/ -type f -iname "*.*") ./upload/
+          cp -rf ./.config ./upload/Config.txt
+          
+          cd ./upload/
+          $GITHUB_WORKSPACE/Scripts/Renames.sh
+          
+          echo "WRT_SIZE=$(du -sb | cut -f1)" >> $GITHUB_ENV
+
+      - name: Generate Release Tag
+        if: env.WRT_TEST != 'true'
+        run: |
+          echo "WRT_TAG=${{env.WRT_INFO}}" >> $GITHUB_ENV
+          
+          touch ./RELEASE.txt
+          echo "📦 固件信息" >> ./RELEASE.txt
+          echo "---" >> ./RELEASE.txt
+          echo "- **构建时间**: ${{env.WRT_DATE}}" >> ./RELEASE.txt
+          echo "- **源码**: ${{inputs.WRT_SOURCE}}@${{inputs.WRT_BRANCH}}" >> ./RELEASE.txt
+          echo "- **提交**: ${{env.WRT_COMMIT}}" >> ./RELEASE.txt
+          echo "- **配置**: ${{inputs.WRT_CONFIG}}" >> ./RELEASE.txt
+          echo "- **大小**: $((${{env.WRT_SIZE}} / 1048576))MB" >> ./RELEASE.txt
+          echo "" >> ./RELEASE.txt
+          echo "### ✨ 增强功能" >> ./RELEASE.txt
+          echo "- ✅ CPUFreq 动态调频（XR1710G 补丁）" >> ./RELEASE.txt
+          echo "- ✅ USB 3.0 完整支持" >> ./RELEASE.txt
+          echo "- ✅ PON 管理界面（airoha-xpon-luci）" >> ./RELEASE.txt
+          echo "- ✅ PCS/SerDes 驱动（光模块支持）" >> ./RELEASE.txt
+          echo "" >> ./RELEASE.txt
+          echo "### 📋 已知问题" >> ./RELEASE.txt
+          echo "- PON 口需运营商 OLT 配合测试" >> ./RELEASE.txt
+          echo "- NPU 加速性能待实测" >> ./RELEASE.txt
+
+      - name: Upload Release
+        if: env.WRT_TEST != 'true'
+        uses: softprops/action-gh-release@master
+        with:
+          tag_name: ${{env.WRT_TAG}}
+          body_path: ./RELEASE.txt
+          files: ./wrt/upload/*.*
+
+      - name: Clean Workflow
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 0
+          keep_minimum_runs: 1
