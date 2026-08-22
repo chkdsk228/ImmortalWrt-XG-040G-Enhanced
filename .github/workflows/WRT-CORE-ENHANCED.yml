@@ -193,6 +193,36 @@ jobs:
           
           echo "✅ DTS 整合完成！"
 
+      - name: Inject Kernel Config
+        if: env.WRT_TARGET == 'airoha'
+        run: |
+          cd ./wrt/target/linux/airoha/
+          echo "=========================================="
+          echo "🔧 直接注入内核配置到 config-6.18"
+          echo "=========================================="
+          KCFG=$(find . -maxdepth 1 -name "config-*" | head -1)
+          if [ -z "$KCFG" ]; then
+            KCFG="config-6.18"
+            touch "$KCFG"
+          fi
+          echo "目标内核配置文件: $KCFG"
+          echo "" >> "$KCFG"
+          echo "# ===== CPUFreq / PM Domain (Enhanced) =====" >> "$KCFG"
+          echo "CONFIG_PM=y" >> "$KCFG"
+          echo "CONFIG_PM_GENERIC_DOMAINS=y" >> "$KCFG"
+          echo "CONFIG_PM_GENERIC_DOMAINS_OF=y" >> "$KCFG"
+          echo "CONFIG_PM_OPP=y" >> "$KCFG"
+          echo "CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" >> "$KCFG"
+          echo "CONFIG_AIROHA_CPU_PM_DOMAIN=y" >> "$KCFG"
+          echo "CONFIG_CPUFREQ_DT=y" >> "$KCFG"
+          echo "CONFIG_CPUFREQ_DT_PLATDEV=y" >> "$KCFG"
+          echo "" >> "$KCFG"
+          echo "# ===== 内核配置导出 =====" >> "$KCFG"
+          echo "CONFIG_IKCONFIG=y" >> "$KCFG"
+          echo "CONFIG_IKCONFIG_PROC=y" >> "$KCFG"
+          echo "✅ 内核配置已注入 $KCFG"
+          grep -E "CONFIG_IKCONFIG|CONFIG_PM=|CONFIG_ARM_AIROHA_SOC_CPUFREQ" "$KCFG"
+
       - name: Check Scripts
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
@@ -336,6 +366,21 @@ jobs:
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
+          # 直接注入内核配置（绕过 OpenWrt Kconfig 系统）
+          echo "=== 直接注入内核配置 ==="
+          KERNEL_CONFIG_DIR=$(find build_dir/target-* -path "*/linux-*/linux-*" -type d 2>/dev/null | head -1)
+          if [ -n "$KERNEL_CONFIG_DIR" ]; then
+            echo "添加内核配置到: $KERNEL_CONFIG_DIR/.config"
+            echo "CONFIG_IKCONFIG=y" >> $KERNEL_CONFIG_DIR/.config
+            echo "CONFIG_IKCONFIG_PROC=y" >> $KERNEL_CONFIG_DIR/.config
+            echo "CONFIG_PM=y" >> $KERNEL_CONFIG_DIR/.config
+            echo "CONFIG_PM_GENERIC_DOMAINS=y" >> $KERNEL_CONFIG_DIR/.config
+            echo "CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" >> $KERNEL_CONFIG_DIR/.config
+            echo "CONFIG_AIROHA_CPU_PM_DOMAIN=y" >> $KERNEL_CONFIG_DIR/.config
+            echo "✅ 内核配置已直接注入"
+          else
+            echo "⚠️ 内核配置目录未找到，将在编译创建后再次注入"
+          fi
           make download -j$(nproc)
 
       - name: Compile Firmware
