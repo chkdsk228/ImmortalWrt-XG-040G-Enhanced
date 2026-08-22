@@ -286,6 +286,8 @@ jobs:
             echo "CONFIG_KERNEL_AIROHA_CPU_PM_DOMAIN=y" >> .config
             echo "CONFIG_KERNEL_CPUFREQ_DT=y" >> .config
             echo "CONFIG_KERNEL_CPUFREQ_DT_PLATDEV=y" >> .config
+            echo "CONFIG_KERNEL_IKCONFIG=y" >> .config
+            echo "CONFIG_KERNEL_IKCONFIG_PROC=y" >> .config
             
             # 第二次 defconfig（让强制配置生效）
             echo "🔧 重新执行 defconfig..."
@@ -305,8 +307,8 @@ jobs:
           grep -q "CONFIG_PM_OPP=y" .config && echo "✅ CONFIG_PM_OPP=y" || { echo "❌ CONFIG_PM_OPP 缺失"; MISSING=1; }
           grep -q "CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" .config && echo "✅ CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" || { echo "❌ CPUFreq 驱动缺失"; MISSING=1; }
           grep -q "CONFIG_AIROHA_CPU_PM_DOMAIN=y" .config && echo "✅ CONFIG_AIROHA_CPU_PM_DOMAIN=y" || { echo "❌ PM Domain 驱动缺失"; MISSING=1; }
-          grep -q "CONFIG_IKCONFIG=y" .config && echo "✅ CONFIG_IKCONFIG=y" || echo "⚠️ IKCONFIG 未启用"
-          grep -q "CONFIG_IKCONFIG_PROC=y" .config && echo "✅ CONFIG_IKCONFIG_PROC=y" || echo "⚠️ IKCONFIG_PROC 未启用"
+          grep -q "CONFIG_KERNEL_IKCONFIG=y" .config && echo "✅ CONFIG_IKCONFIG=y" || echo "⚠️ IKCONFIG 未启用"
+          grep -q "CONFIG_KERNEL_IKCONFIG_PROC=y" .config && echo "✅ CONFIG_IKCONFIG_PROC=y" || echo "⚠️ IKCONFIG_PROC 未启用"
           
           # 如果关键配置缺失，退出构建
           if [ $MISSING -eq 1 ]; then
