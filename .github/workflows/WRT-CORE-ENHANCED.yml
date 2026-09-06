@@ -357,11 +357,11 @@ jobs:
           # 检查关键配置
           MISSING=0
           
-          grep -q "CONFIG_PM=y" .config && echo "✅ CONFIG_PM=y" || { echo "❌ CONFIG_PM 缺失"; MISSING=1; }
-          grep -q "CONFIG_PM_GENERIC_DOMAINS=y" .config && echo "✅ CONFIG_PM_GENERIC_DOMAINS=y" || { echo "❌ CONFIG_PM_GENERIC_DOMAINS 缺失"; MISSING=1; }
-          grep -q "CONFIG_PM_OPP=y" .config && echo "✅ CONFIG_PM_OPP=y" || { echo "❌ CONFIG_PM_OPP 缺失"; MISSING=1; }
-          grep -q "CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" .config && echo "✅ CONFIG_ARM_AIROHA_SOC_CPUFREQ=y" || { echo "❌ CPUFreq 驱动缺失"; MISSING=1; }
-          grep -q "CONFIG_AIROHA_CPU_PM_DOMAIN=y" .config && echo "✅ CONFIG_AIROHA_CPU_PM_DOMAIN=y" || { echo "❌ PM Domain 驱动缺失"; MISSING=1; }
+          grep -q "CONFIG_KERNEL_PM=y" .config && echo "✅ CONFIG_KERNEL_PM=y" || { echo "❌ CONFIG_PM 缺失"; MISSING=1; }
+          grep -q "CONFIG_KERNEL_PM_GENERIC_DOMAINS=y" .config && echo "✅ CONFIG_KERNEL_PM_GENERIC_DOMAINS=y" || { echo "❌ CONFIG_PM_GENERIC_DOMAINS 缺失"; MISSING=1; }
+          grep -q "CONFIG_KERNEL_PM_OPP=y" .config && echo "✅ CONFIG_KERNEL_PM_OPP=y" || { echo "❌ CONFIG_PM_OPP 缺失"; MISSING=1; }
+          grep -q "CONFIG_KERNEL_ARM_AIROHA_SOC_CPUFREQ=y" .config && echo "✅ CONFIG_KERNEL_ARM_AIROHA_SOC_CPUFREQ=y" || { echo "❌ CPUFreq 驱动缺失"; MISSING=1; }
+          grep -q "CONFIG_KERNEL_AIROHA_CPU_PM_DOMAIN=y" .config && echo "✅ CONFIG_KERNEL_AIROHA_CPU_PM_DOMAIN=y" || { echo "❌ PM Domain 驱动缺失"; MISSING=1; }
           grep -q "CONFIG_KERNEL_IKCONFIG=y" .config && echo "✅ CONFIG_IKCONFIG=y" || echo "⚠️ IKCONFIG 未启用"
           grep -q "CONFIG_KERNEL_IKCONFIG_PROC=y" .config && echo "✅ CONFIG_IKCONFIG_PROC=y" || echo "⚠️ IKCONFIG_PROC 未启用"
           
