@@ -62,6 +62,11 @@ jobs:
           for f in /tmp/upstream-config/Config/*; do
             name=$(basename "$f")
             if [ -f "./Config/$name" ]; then
+              # 保护自研定制: GENERAL.txt 含自研标记时跳过覆盖
+              if [ "$name" = "GENERAL.txt" ] && grep -q "自研定制" "./Config/$name" 2>/dev/null; then
+                echo "  protected Config/$name (含自研定制，跳过)"
+                continue
+              fi
               if ! diff -q "$f" "./Config/$name" >/dev/null 2>&1; then
                 cp -f "$f" "./Config/$name"
                 echo "  updated Config/$name"
