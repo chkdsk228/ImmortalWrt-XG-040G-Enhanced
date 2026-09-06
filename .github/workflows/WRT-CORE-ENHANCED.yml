@@ -76,7 +76,8 @@ jobs:
         run: |
           sudo -S -p '' -E apt update
           sudo -S -p '' -E apt -y full-upgrade
-          sudo -S -p '' -E apt -y install $(curl -fsSL https://is.gd/depend_ubuntu2204_openwrt)
+          sudo -S -p '' -E apt -y install dos2unix libfuse-dev
+          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -S -p '' -E apt -y autoremove --purge
           sudo -S -p '' -E apt clean
           sudo -S -p '' -E timedatectl set-timezone "Asia/Shanghai"
@@ -86,7 +87,7 @@ jobs:
           export WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
           export WRT_MARK="${{inputs.WRT_SOURCE}}-${{inputs.WRT_BRANCH}}"
           export WRT_INFO="${{inputs.WRT_CONFIG}}-${WRT_MARK}-${WRT_DATE}"
-          export WRT_TARGET=$(grep "^CONFIG_TARGET_" $GITHUB_WORKSPACE/Config/${{inputs.WRT_CONFIG}}.txt | cut -d_ -f3 | cut -d= -f1)
+          export WRT_TARGET=$(grep -m 1 "^CONFIG_TARGET_" $GITHUB_WORKSPACE/Config/${{inputs.WRT_CONFIG}}.txt | cut -d_ -f3 | cut -d= -f1)
           export WRT_HASH=$(git log --pretty=format:'%h' -n 1)
           
           echo "WRT_DATE=$WRT_DATE" >> $GITHUB_ENV
