@@ -42,6 +42,11 @@ jobs:
           for f in /tmp/upstream-config/Scripts/*; do
             name=$(basename "$f")
             if [ -f "./Scripts/$name" ]; then
+              # 保护自研定制: Settings.sh 含自研标记时跳过覆盖
+              if [ "$name" = "Settings.sh" ] && grep -q "自研定制" "./Scripts/$name" 2>/dev/null; then
+                echo "  protected Scripts/$name (含自研定制，跳过)"
+                continue
+              fi
               if ! diff -q "$f" "./Scripts/$name" >/dev/null 2>&1; then
                 cp -f "$f" "./Scripts/$name"
                 echo "  updated Scripts/$name"
