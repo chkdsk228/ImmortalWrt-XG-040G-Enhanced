@@ -1,6 +1,7 @@
 # ============================================================
 # 🔧 自研定制配置 (chkdsk228) — PRIVATE.txt 不受上游同步影响
 # 由 WRT-CORE-ENHANCED.yml 在 Custom Settings 阶段追加到 .config
+# 注: 与上游 GENERAL.txt 重复的公共项已移除
 # ============================================================
 
 #增加插件 (自研 - 多WAN负载均衡)
@@ -16,47 +17,13 @@ CONFIG_PACKAGE_xtables-nft=y
 CONFIG_PACKAGE_kmod-nft-compat=y
 CONFIG_PACKAGE_firewall4=y
 
-#删除插件
-CONFIG_PACKAGE_luci-app-wol=n
-
 #参数调整
-CONFIG_TARGET_MULTI_PROFILE=y
-CONFIG_TARGET_PER_DEVICE_ROOTFS=y
-CONFIG_TARGET_ROOTFS_INITRAMFS=n
-CONFIG_PACKAGE_ip-full=y          # 完整 ip 命令，用于策略路由
 CONFIG_PACKAGE_iptables-mod-extra=y
 CONFIG_PACKAGE_iptables-mod-hashlimit=y
 CONFIG_PACKAGE_kmod-sched-core=y  # 流量调度
 CONFIG_PACKAGE_kmod-sched-connmark=y
 
-#内核调整（已禁用冲突的旧版 iptables 内核模块）
-CONFIG_PACKAGE_kmod-bonding=y
-CONFIG_PACKAGE_kmod-dsa=y
-CONFIG_PACKAGE_kmod-dummy=y
-CONFIG_PACKAGE_kmod-fs-btrfs=y
-CONFIG_PACKAGE_kmod-fs-ksmbd=y
-CONFIG_PACKAGE_kmod-fuse=y
-CONFIG_PACKAGE_kmod-inet-diag=y
-CONFIG_PACKAGE_kmod-inet-mptcp-diag=y
-CONFIG_PACKAGE_kmod-mtd-rw=y
-CONFIG_PACKAGE_kmod-netlink-diag=y
-CONFIG_PACKAGE_kmod-nf-nat6=y
-CONFIG_PACKAGE_kmod-nft-arp=y
-CONFIG_PACKAGE_kmod-nft-bridge=y
-CONFIG_PACKAGE_kmod-nft-connlimit=y
-CONFIG_PACKAGE_kmod-nft-core=y
-CONFIG_PACKAGE_kmod-nft-dup-inet=y
-CONFIG_PACKAGE_kmod-nft-fib=y
-CONFIG_PACKAGE_kmod-nft-fullcone=y
-CONFIG_PACKAGE_kmod-nft-nat=y
-CONFIG_PACKAGE_kmod-nft-netdev=y
-CONFIG_PACKAGE_kmod-nft-offload=y
-CONFIG_PACKAGE_kmod-nft-queue=y
-CONFIG_PACKAGE_kmod-nft-socket=y
-CONFIG_PACKAGE_kmod-nft-tproxy=y
-CONFIG_PACKAGE_kmod-nft-xfrm=y
-CONFIG_PACKAGE_kmod-tun=y
-CONFIG_PACKAGE_kmod-usb3=y
+# ========== USB 网络设备驱动 (自研 - 4G 网卡/USB以太网支持) ==========
 CONFIG_PACKAGE_kmod-usb-core=y
 CONFIG_PACKAGE_kmod-usb-net=y
 CONFIG_PACKAGE_kmod-usb-net-asix=y
