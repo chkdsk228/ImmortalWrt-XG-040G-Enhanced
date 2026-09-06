@@ -81,6 +81,8 @@ jobs:
 
       - name: Trigger rebuild
         if: env.CHANGED == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run AIR-ENHANCED.yml --repo ${{ github.repository }}
           echo "triggered AIR-ENHANCED rebuild"
