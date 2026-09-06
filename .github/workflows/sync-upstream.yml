@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2026 chkdsk228
+# 定期同步上游配置仓库 (bingoguo93/OpenWRT-CI-XG-040G-MD) 的 Scripts/Config 更新
+# 参考 naoki66/ImmortalWrt-for-Gemtek-XR1710G 的 sync-upstream 设计
+
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 19 */3 * *'   # 每 3 天 UTC 19:00 = 北京时间 03:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+
+      - name: Fetch upstream config
+        run: |
+          rm -rf /tmp/upstream-config
+          git clone --depth=1 https://github.com/bingoguo93/OpenWRT-CI-XG-040G-MD.git /tmp/upstream-config
+          echo "upstream cloned"
+
+      - name: Sync Scripts and Config
+        run: |
+          CHANGED=0
+          echo "=== Sync Scripts/ ==="
+          for f in /tmp/upstream-config/Scripts/*; do
+            name=$(basename "$f")
+            if [ -f "./Scripts/$name" ]; then
+              if ! diff -q "$f" "./Scripts/$name" >/dev/null 2>&1; then
+                cp -f "$f" "./Scripts/$name"
+                echo "  updated Scripts/$name"
+                CHANGED=1
+              fi
+            else
+              cp -f "$f" "./Scripts/$name"
+              echo "  added Scripts/$name"
+              CHANGED=1
+            fi
+          done
+          echo "=== Sync Config/ ==="
+          for f in /tmp/upstream-config/Config/*; do
+            name=$(basename "$f")
+            if [ -f "./Config/$name" ]; then
+              if ! diff -q "$f" "./Config/$name" >/dev/null 2>&1; then
+                cp -f "$f" "./Config/$name"
+                echo "  updated Config/$name"
+                CHANGED=1
+              fi
+            else
+              cp -f "$f" "./Config/$name"
+              echo "  added Config/$name"
+              CHANGED=1
+            fi
+          done
+          echo "CHANGED=$CHANGED" >> "$GITHUB_ENV"
+          [ "$CHANGED" = "1" ] && echo "upstream changes detected" || echo "no upstream changes"
+
+      - name: Commit and push
+        if: env.CHANGED == '1'
+        run: |
+          git add -A
+          git commit -m "sync: 同步上游 bingoguo93/OpenWRT-CI-XG-040G-MD 的 Scripts/Config"
+          git push origin main
+          echo "committed and pushed"
+
+      - name: Trigger rebuild
+        if: env.CHANGED == '1'
+        run: |
+          gh workflow run AIR-ENHANCED.yml --repo ${{ github.repository }}
+          echo "triggered AIR-ENHANCED rebuild"
+
+      - name: Show result
+        if: always()
+        run: git log --oneline -3 || true
