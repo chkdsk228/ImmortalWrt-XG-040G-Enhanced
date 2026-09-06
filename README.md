@@ -9,7 +9,7 @@
 - ✅ **USB 3.0 全功能** — 内核模块完整配置
 - ✅ **PON 口管理界面** — 集成 `airoha-xpon-luci`（GPON/XGPON/EPON 认证、OMCI、光模块 DDM）
 - ✅ **2.5G LAN + WAN 自动配置** — eth1(EN8811H) 做 LAN，lan4 做 WAN
-- ✅ **100+ 内核补丁** — Flow Offload、NPU 加速、PCIe 3.0、PCS/SerDes
+- ✅ **精选补丁集** — 整合 naoki66 XR1710G 的 8 个核心补丁（CPUFreq/PM-Domain、USB PHY、PCS/SerDes），覆盖 Flow Offload、NPU 加速、PCIe 3.0 等
 
 ### 设备支持
 | 型号 | SoC | 内存 | 闪存 | 网口 | PON |
@@ -97,6 +97,19 @@ cd ImmortalWrt-XG-040G-Enhanced
 - [ ] PCIe 设备（原硬件无 PCIe 设备）
 
 
+
+### 🏗️ 项目结构（自研与上游分离）
+
+| 文件 | 类型 | 说明 |
+|------|------|------|
+| `Config/GENERAL.txt` | 上游同步 | 公共配置，每 3 天自动同步 |
+| `Config/PRIVATE.txt` | 🔒 自研 | mwan3 双WAN、USB 网卡驱动、连接追踪、OpenVPN 禁用 |
+| `Config/AIROHA-ENHANCED.txt` | 🔒 自研 | 4 设备 + CPUFreq + NPU + PON 配置 |
+| `Scripts/Settings.sh` | 上游同步 | 基础系统配置 |
+| `Scripts/AirohaCustom.sh` | 🔒 自研 | 双 WAN 负载均衡 + board.json（LED/网口） |
+| `Scripts/patch-an7581-dtsi.py` | 🔒 自研 | CPUFreq probe 修复 |
+
+> `PRIVATE.txt` 与 `AirohaCustom.sh` 不参与上游同步，不会被覆盖。
 ### 🔧 自研脚本 `patch-an7581-dtsi.py`
 
 构建时自动给 `an7581.dtsi` 的 `cpufreq` 节点补上 `chip-scu` reg 定义（`0x1fa20000` + `0x1efbe000`），**修复 CPUFreq 驱动 probe 失败**——这是 607 号补丁未覆盖的硬件时序问题，由本项目独立解决。
