@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 chkdsk228
-# 定期同步上游配置仓库 (bingoguo93/OpenWRT-CI-XG-040G-MD) 的 Scripts/Config 更新
-# 参考 naoki66/ImmortalWrt-for-Gemtek-XR1710G 的 sync-upstream 设计
+# 定期同步上游配置仓库 (bingoguo93/OpenWRT-CI-XG-040G-MD) 的更新
+# 白名单策略: 只同步需要的文件, 自研文件(PRIVATE.txt/AirohaCustom.sh)与无关平台配置永不触碰
 
 name: Sync Upstream
 
@@ -35,62 +35,58 @@ jobs:
           git clone --depth=1 https://github.com/bingoguo93/OpenWRT-CI-XG-040G-MD.git /tmp/upstream-config
           echo "upstream cloned"
 
-      - name: Sync Scripts and Config
+      - name: Sync Scripts whitelist
         run: |
           CHANGED=0
-          echo "=== Sync Scripts/ ==="
-          for f in /tmp/upstream-config/Scripts/*; do
-            name=$(basename "$f")
-            if [ -f "./Scripts/$name" ]; then
-              # 保护自研定制: Settings.sh 含自研标记时跳过覆盖
-              if [ "$name" = "Settings.sh" ] && grep -q "自研定制" "./Scripts/$name" 2>/dev/null; then
-                echo "  protected Scripts/$name (含自研定制，跳过)"
-                continue
-              fi
-              if ! diff -q "$f" "./Scripts/$name" >/dev/null 2>&1; then
+          echo "=== Sync Scripts/ (whitelist: Settings.sh Packages.sh Handles.sh) ==="
+          for name in Settings.sh Packages.sh Handles.sh; do
+            f="/tmp/upstream-config/Scripts/$name"
+            if [ -f "$f" ]; then
+              if [ -f "./Scripts/$name" ]; then
+                if ! diff -q "$f" "./Scripts/$name" >/dev/null 2>&1; then
+                  cp -f "$f" "./Scripts/$name"
+                  echo "  updated Scripts/$name"
+                  CHANGED=1
+                fi
+              else
                 cp -f "$f" "./Scripts/$name"
-                echo "  updated Scripts/$name"
+                echo "  added Scripts/$name"
                 CHANGED=1
               fi
-            else
-              cp -f "$f" "./Scripts/$name"
-              echo "  added Scripts/$name"
-              CHANGED=1
-            fi
-          done
-          echo "=== Sync Config/ ==="
-          for f in /tmp/upstream-config/Config/*; do
-            name=$(basename "$f")
-            if [ -f "./Config/$name" ]; then
-              # 保护自研定制: GENERAL.txt 含自研标记时跳过覆盖
-              if [ "$name" = "GENERAL.txt" ] && grep -q "自研定制" "./Config/$name" 2>/dev/null; then
-                echo "  protected Config/$name (含自研定制，跳过)"
-                continue
-              fi
-              if ! diff -q "$f" "./Config/$name" >/dev/null 2>&1; then
-                cp -f "$f" "./Config/$name"
-                echo "  updated Config/$name"
-                CHANGED=1
-              fi
-            else
-              cp -f "$f" "./Config/$name"
-              echo "  added Config/$name"
-              CHANGED=1
             fi
           done
           echo "CHANGED=$CHANGED" >> "$GITHUB_ENV"
-          [ "$CHANGED" = "1" ] && echo "upstream changes detected" || echo "no upstream changes"
+
+      - name: Sync Config whitelist
+        run: |
+          CHANGED_CFG=0
+          echo "=== Sync Config/ (whitelist: GENERAL.txt only) ==="
+          f="/tmp/upstream-config/Config/GENERAL.txt"
+          if [ -f "$f" ]; then
+            if [ -f "./Config/GENERAL.txt" ]; then
+              if ! diff -q "$f" "./Config/GENERAL.txt" >/dev/null 2>&1; then
+                cp -f "$f" "./Config/GENERAL.txt"
+                echo "  updated Config/GENERAL.txt"
+                CHANGED_CFG=1
+              fi
+            else
+              cp -f "$f" "./Config/GENERAL.txt"
+              echo "  added Config/GENERAL.txt"
+              CHANGED_CFG=1
+            fi
+          fi
+          echo "CHANGED_CFG=$CHANGED_CFG" >> "$GITHUB_ENV"
 
       - name: Commit and push
-        if: env.CHANGED == '1'
+        if: env.CHANGED == '1' || env.CHANGED_CFG == '1'
         run: |
           git add -A
-          git commit -m "sync: 同步上游 bingoguo93/OpenWRT-CI-XG-040G-MD 的 Scripts/Config"
+          git commit -m "sync: 同步上游 bingoguo93/OpenWRT-CI-XG-040G-MD (白名单: Scripts + GENERAL.txt)"
           git push origin main
           echo "committed and pushed"
 
       - name: Trigger rebuild
-        if: env.CHANGED == '1'
+        if: env.CHANGED == '1' || env.CHANGED_CFG == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
