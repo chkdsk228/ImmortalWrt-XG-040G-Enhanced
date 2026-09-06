@@ -5,6 +5,8 @@
 name: AIR-ENHANCED
 
 on:
+  schedule:
+    - cron: '0 21 * * 1,4'   # 每周一、四 UTC 21:00 = 北京时间 05:00 自动构建
   workflow_dispatch:
     inputs:
       PACKAGE:
