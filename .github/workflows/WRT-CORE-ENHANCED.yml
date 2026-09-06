@@ -162,28 +162,30 @@ jobs:
           
           echo "✅ 补丁整合完成！"
 
-      - name: Borrow XG2010G DTS
+      - name: Borrow AN7581 DTS (4-device support)
         if: env.WRT_TARGET == 'airoha'
         run: |
           cd ./wrt/target/linux/airoha/
           echo "=========================================="
-          echo "📦 借用 XG2010G 的 DTS 文件"
+          echo "📦 借用 bingoguo93/immortalwrt 6.18 的 DTS（4 设备全支持）"
           echo "=========================================="
-          
-          # 下载 image/an7581.mk
-          curl -sLo image/an7581.mk "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XG2010G/master/target/linux/airoha/image/an7581.mk"
-          echo "  ✅ image/an7581.mk"
-          
-          # 下载 DTS 文件
+          echo "Borrowing XG-040G files from bingoguo93/immortalwrt 6.18..."
+          curl -sLo image/an7581.mk "https://raw.githubusercontent.com/bingoguo93/immortalwrt/6.18/target/linux/airoha/image/an7581.mk"
+          echo "  ✅ image/an7581.mk (含 040G-MD/TF + 140G-MD/TF 全部设备)"
           cd ./dts/
-          for DTS in an7581-gemtek-xg2010g.dts \
-                     an7581-nokia_xg-040g-md.dts \
-                     an7581-nokia_xg-040g-md-ubi.dts \
+          for DTS in an7581-nokia_xg-040g-md.dts \
+                     an7581-nokia_xg-040g-tf.dts \
+                     an7581-nokia_xg-140g-md.dts \
+                     an7581-nokia_xg-140g-tf.dts \
+                     an7581-nokia_xg-040g-md-common-nwrt.dtsi \
+                     an7581-nokia_xg-040g-md-common-nwrt-ubi-parts.dtsi \
                      an7581-nokia_xg-040g-md-common.dtsi \
+                     an7581-nokia_xg-040g-md-ubi.dts \
+                     an7581-npu.dtsi \
                      an758x-nokia_xg-040g-common.dtsi \
                      an758x-nokia_xg-040g-stock-parts.dtsi \
                      an758x-nokia_xg-040g-ubi-parts.dtsi; do
-            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XG2010G/master/target/linux/airoha/dts/$DTS"
+            curl -fsSLO "https://raw.githubusercontent.com/bingoguo93/immortalwrt/6.18/target/linux/airoha/dts/$DTS"
             if [ ! -f "$DTS" ]; then
               echo "  ❌ 关键 DTS 下载失败: $DTS"
               exit 1
@@ -191,7 +193,7 @@ jobs:
             echo "  ✅ $DTS"
           done
           
-          echo "✅ DTS 整合完成！"
+          echo "✅ DTS 整合完成！(4 设备全支持)"
 
       - name: Inject Kernel Config
         if: env.WRT_TARGET == 'airoha'
@@ -272,32 +274,42 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
-      - name: Install airoha-xpon-luci
+      - name: Install airoha-xpon-luci (files overlay)
         if: env.WRT_TARGET == 'airoha'
         run: |
-          cd ./wrt/package/
+          cd ./wrt/
           echo "=========================================="
-          echo "📦 集成 airoha-xpon-luci（PON 管理）"
+          echo "📦 集成 airoha-xpon-luci（PON 管理，files 覆盖机制）"
           echo "=========================================="
           
-          git clone --depth=1 https://github.com/naoki66/airoha-xpon-luci.git
+          git clone --depth=1 https://github.com/naoki66/airoha-xpon-luci.git /tmp/xpon-luci
           
-          if [ -d "airoha-xpon-luci" ]; then
+          if [ -d "/tmp/xpon-luci" ]; then
             echo "✅ airoha-xpon-luci 克隆成功"
-            ls -la airoha-xpon-luci/
+            # 非 OpenWrt 包（无 Makefile），作为 files/ 覆盖打进 rootfs
+            mkdir -p ./files
+            cp -r /tmp/xpon-luci/etc /tmp/xpon-luci/lib /tmp/xpon-luci/usr /tmp/xpon-luci/www ./files/
+            chmod +x ./files/usr/bin/*.sh ./files/usr/bin/pon-* ./files/usr/bin/xpon-* ./files/etc/init.d/* ./files/etc/uci-defaults/* 2>/dev/null || true
+            echo "✅ 已复制到 ./files/ (OpenWrt files 覆盖机制)"
+            ls ./files/
           else
             echo "❌ 克隆失败"
+            exit 1
           fi
 
       - name: Custom Settings
         run: |
           cd ./wrt/
           
-          # 合并配置文件
+          # 合并配置文件 (含 PRIVATE.txt 自研配置)
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
           else
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
+            if [ -f "$GITHUB_WORKSPACE/Config/PRIVATE.txt" ]; then
+              echo "── 追加 PRIVATE.txt 自研配置 ──"
+              cat $GITHUB_WORKSPACE/Config/PRIVATE.txt >> .config
+            fi
           fi
           
           # 第一次 defconfig
@@ -357,11 +369,13 @@ jobs:
           # 运行自定义脚本
           $GITHUB_WORKSPACE/Scripts/Settings.sh
           
-          # 清理（强制清除内核编译缓存）
+          # 运行自研 Airoha 定制（双 WAN / board.json）
+          $GITHUB_WORKSPACE/Scripts/AirohaCustom.sh
+          
+          # 轻量清理（保留 toolchain 缓存，不做 dirclean）
           rm -rf ./build_dir/target-*/linux-*/linux-*/.config
           rm -rf ./build_dir/target-*/linux-*/linux-*/include/config
           rm -rf ./staging_dir/target-*/pkginfo
-          make dirclean -j$(nproc)
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
@@ -433,6 +447,7 @@ jobs:
           echo "- ✅ USB 3.0 完整支持" >> ./RELEASE.txt
           echo "- ✅ PON 管理界面（airoha-xpon-luci）" >> ./RELEASE.txt
           echo "- ✅ PCS/SerDes 驱动（光模块支持）" >> ./RELEASE.txt
+          echo "- ✅ 双 WAN 负载均衡（lan3+lan4）" >> ./RELEASE.txt
           echo "" >> ./RELEASE.txt
           echo "### 📋 已知问题" >> ./RELEASE.txt
           echo "- PON 口需运营商 OLT 配合测试" >> ./RELEASE.txt
