@@ -40,7 +40,7 @@ jobs:
         BRANCH: [master]
 
     #调用公用编译核心WRT-CORE.yml
-    uses: ./.github/workflows/WRT-CORE.yml
+    uses: ./.github/workflows/WRT-CORE-ENHANCED.yml
     with:
       #编译配置
       WRT_CONFIG: ${{matrix.CONFIG}}
