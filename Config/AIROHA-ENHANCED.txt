@@ -3,11 +3,13 @@
 # Integrated with naoki66's XR1710G/XG2010G patches
 #
 
-# Target
+# Target (全部 4 个设备)
 CONFIG_TARGET_airoha=y
 CONFIG_TARGET_airoha_an7581=y
 CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_nokia_xg-040g-md=y
-CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_gemtek_xg2010g=y
+CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_nokia_xg-040g-tf=y
+CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_nokia_xg-140g-md=y
+CONFIG_TARGET_DEVICE_airoha_an7581_DEVICE_nokia_xg-140g-tf=y
 
 # Kernel Features
 CONFIG_KERNEL_DEVMEM=y
