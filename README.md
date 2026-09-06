@@ -96,6 +96,14 @@ cd ImmortalWrt-XG-040G-Enhanced
 - [ ] NPU 硬件加速实际性能
 - [ ] PCIe 设备（原硬件无 PCIe 设备）
 
+
+### 🔧 自研脚本 `patch-an7581-dtsi.py`
+
+构建时自动给 `an7581.dtsi` 的 `cpufreq` 节点补上 `chip-scu` reg 定义（`0x1fa20000` + `0x1efbe000`），**修复 CPUFreq 驱动 probe 失败**——这是 607 号补丁未覆盖的硬件时序问题，由本项目独立解决。
+
+- 位置：`Scripts/patch-an7581-dtsi.py`
+- 原理：DTS 编译前注入 `reg`/`reg-names`（`chip-scu`, `mcucfg`），让 `ARM_AIROHA_SOC_CPUFREQ` 驱动能正确映射寄存器
+- 幂等：已存在 `chip-scu` 时自动跳过，不重复注入
 ## 🙏 致谢
 
 本项目整合了以下开源项目的成果：
