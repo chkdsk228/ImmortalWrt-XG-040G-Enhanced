@@ -74,5 +74,3 @@ CONFIG_PACKAGE_luci-i18n-openvpn-zh-cn=n
 CONFIG_PACKAGE_kmod-ovpn-dco-v2=n
 CONFIG_PACKAGE_kmod-ovpn-backports=n
 
-#跳过 host gettext-full 编译（使用系统 gettext）
-CONFIG_BUILD_NLS=n
