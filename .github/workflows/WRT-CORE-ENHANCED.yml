@@ -369,6 +369,11 @@ jobs:
           # 运行自定义脚本
           $GITHUB_WORKSPACE/Scripts/Settings.sh
           
+          # ⚠️ 重新 defconfig：让 Settings.sh 追加的配置（如 CONFIG_PACKAGE_luci=y）的
+          #    依赖包（luci-light/luci-app-package-manager 等）传播到 .config
+          #    否则 luci.apk 元数据声明依赖而包未构建 → apk install 阶段 no such package
+          make defconfig -j$(nproc)
+          
           # 运行自研 Airoha 定制（双 WAN / board.json）
           $GITHUB_WORKSPACE/Scripts/AirohaCustom.sh
           
