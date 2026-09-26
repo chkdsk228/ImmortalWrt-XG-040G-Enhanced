@@ -136,10 +136,9 @@ jobs:
           # 下载 XR1710G 的关键补丁 (2026-09 同步上游最新文件名)
           echo "📥 下载 CPUFreq/PM-Domain 补丁..."
           for PATCH in 0401-pmdomain-airoha-fallback-to-PLL-registers-when-BL31-GET_FREQ-fails.patch \
-                       0403-pmdomain-airoha-expose-kconfig-symbol-on-ARCH_AIROHA.patch \
                        600-05-clk-en7523-permit-to-reference-Chip-SCU-from-phandle.patch \
                        607-cpufreq-airoha-fix-probe-failure-with-correct-error-check.patch; do
-            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-brightspeed/master/target/linux/airoha/patches-6.18/$PATCH"
             if [ ! -f "$PATCH" ]; then
               echo "  ❌ 关键补丁下载失败: $PATCH"
               exit 1
@@ -150,7 +149,7 @@ jobs:
           echo "📥 下载 USB PHY 补丁..."
           for PATCH in 220-07-phy-airoha-Add-support-for-Airoha-AN7581-USB-PHY.patch \
                        220-08-usb-host-add-ARCH_AIROHA-in-XHCI-MTK-dependency.patch; do
-            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-brightspeed/master/target/linux/airoha/patches-6.18/$PATCH"
             if [ ! -f "$PATCH" ]; then
               echo "  ❌ 关键补丁下载失败: $PATCH"
               exit 1
@@ -161,7 +160,7 @@ jobs:
           echo "📥 下载 PCS/SerDes 补丁（PON 支持）..."
           for PATCH in 310-09-net-pcs-airoha-add-PCS-driver-for-Airoha-AN7581-SoC.patch \
                        310-10-net-airoha-add-phylink-support.patch; do
-            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-XR1710G/master/target/linux/airoha/patches-6.18/$PATCH"
+            curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-brightspeed/master/target/linux/airoha/patches-6.18/$PATCH"
             if [ ! -f "$PATCH" ]; then
               echo "  ❌ 关键补丁下载失败: $PATCH"
               exit 1
