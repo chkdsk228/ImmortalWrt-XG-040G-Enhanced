@@ -159,7 +159,9 @@ jobs:
           
           echo "📥 下载 PCS/SerDes 补丁（PON 支持）..."
           for PATCH in 310-09-net-pcs-airoha-add-PCS-driver-for-Airoha-AN7581-SoC.patch \
-                       310-10-net-airoha-add-phylink-support.patch; do
+                       310-10-net-airoha-add-phylink-support.patch \
+                       604-01-net-pcs-airoha-add-support-for-AN7583.patch \
+                       605-net-pcs-airoha-add-support-for-optional-xfi-reset-li.patch; do
             curl -fsSLO "https://raw.githubusercontent.com/naoki66/ImmortalWrt-for-Gemtek-brightspeed/master/target/linux/airoha/patches-6.18/$PATCH"
             if [ ! -f "$PATCH" ]; then
               echo "  ❌ 关键补丁下载失败: $PATCH"
