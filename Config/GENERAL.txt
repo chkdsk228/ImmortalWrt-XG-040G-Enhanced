@@ -49,6 +49,20 @@ CONFIG_PACKAGE_kmod-nft-socket=y
 CONFIG_PACKAGE_kmod-nft-tproxy=y
 CONFIG_PACKAGE_kmod-nft-xfrm=y
 CONFIG_PACKAGE_kmod-tun=y
+#zram
+#虚拟内存
+CONFIG_PACKAGE_kmod-zram=y
+CONFIG_PACKAGE_zram-swap=y
+# 内核内置主线BBR‑v3
+CONFIG_KERNEL_TCP_CONG_BBR=y
+CONFIG_KERNEL_NET_SCH_FQ=y
+# 禁止旧外部BBR模块
+# CONFIG_PACKAGE_kmod-tcp-bbr is not set
+# CONFIG_PACKAGE_kmod-sound-core is not set
+CONFIG_PACKAGE_kmod-tun=y
+CONFIG_PACKAGE_kmod-veth=y
+CONFIG_PACKAGE_kmod-wireguard=y
+CONFIG_PACKAGE_kmod-ovpn-backports=y
 #组件调整
 CONFIG_PACKAGE_autocore=y
 CONFIG_PACKAGE_autocore-arm=y
